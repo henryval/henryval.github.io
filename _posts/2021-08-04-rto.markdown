@@ -1,10 +1,15 @@
 ---
 title: "RTO review"
 author: ferbot
-date: 2021-07-30 12:00:00 +0800
+date: 2021-08-04 12:00:00 +0800
 categories: [certs, crto]
 tags: [windows, c2, rastamouse, covenant, redteam]
 ---
+
+### UPDATE!
+
+The new course (update)[https://www.zeropointsecurity.co.uk/blog/red-team-ops-2021-update] just arrived. It envolves private labs instead of shared labs, access to Cobalt Strike (does this mean the course will be only CS focused? no more buggy Covenant?). Please take a look at this new update as my review is now outdated. Here are some new early reviews on RTO's new update: [huskyhacks](https://huskyhacks.dev/2021/08/04/rto-2021/) and [muldwych](https://thesecuritynoob.com/course/crto-certified-red-team-operator-review-by-zero-point-security-review/).
+
 ### CRTO Review
 
 Hello everybody. In the last weeks I passed Red Team Ops's exam and became certified as CRTO. So I decided to provide some personal insight for rastamouse's [course](https://www.zeropointsecurity.co.uk/red-team-ops) and certification. I will be leaving out a few tips for those interested in diving in so you can manage your time better than I did, and focus on the important things. Let jump right in.
