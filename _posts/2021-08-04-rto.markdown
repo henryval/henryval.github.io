@@ -8,7 +8,7 @@ tags: [windows, c2, rastamouse, covenant, redteam]
 
 ### UPDATE!
 
-The new course (update)[https://www.zeropointsecurity.co.uk/blog/red-team-ops-2021-update] just arrived. It envolves private labs instead of shared labs, access to Cobalt Strike (does this mean the course will be only CS focused? no more buggy Covenant?). Please take a look at this new update as my review is now outdated. Here are some new early reviews on RTO's new update: [huskyhacks](https://huskyhacks.dev/2021/08/04/rto-2021/) and [muldwych](https://thesecuritynoob.com/course/crto-certified-red-team-operator-review-by-zero-point-security-review/).
+The new course [update](https://www.zeropointsecurity.co.uk/blog/red-team-ops-2021-update) just arrived. It envolves private labs instead of shared labs, access to Cobalt Strike (does this mean the course will be only CS focused? no more buggy Covenant?). Please take a look at this new update as my review is now outdated. Here are some new early reviews on RTO's new update: [huskyhacks](https://huskyhacks.dev/2021/08/04/rto-2021/) and [muldwych](https://thesecuritynoob.com/course/crto-certified-red-team-operator-review-by-zero-point-security-review/).
 
 ### CRTO Review
 
