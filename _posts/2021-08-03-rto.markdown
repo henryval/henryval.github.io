@@ -1,0 +1,60 @@
+---
+title: "RTO review"
+author: ferbot
+date: 2021-07-30 12:00:00 +0800
+categories: [certs, crto]
+tags: [windows, c2, rastamouse, covenant, redteam]
+---
+### CRTO Review
+
+Hello everybody. In the last weeks I passed Red Team Ops's exam and became certified as CRTO. So I decided to provide some personal insight for rastamouse's [course](https://www.zeropointsecurity.co.uk/red-team-ops) and certification. I will be leaving out a few tips for those interested in diving in so you can manage your time better than I did, and focus on the important things. Let jump right in.
+
+### Why did you take RTO?
+
+I was always interested in AD pwning, AV evasion, kerberos attacks and red team-related stuff, so I started studying using material beginner-friendly. [Rasta](https://twitter.com/_rastamouse) started having a name in cybersecurity (mostly in red team stuff) thanks to his research and HTB pro labs: [rastalabs](https://www.hackthebox.eu/newsroom/prolab-rastalabs).
+<br /><br />
+Last year, bored mid-year in lockdown cuz of the pandemic, I decided to roll into Pentester's Academy [Attacking and Defending Active Directory](https://www.pentesteracademy.com/activedirectorylab) (CRTP) and Rasta's [Red Team Ops](https://www.zeropointsecurity.co.uk/red-team-ops). I have heard about RTO's high demand and recent updated platform so I jumped into it after I finished my CRTP.
+
+### How does it work?
+
+This course shocked me. It was like something I never experienced. We are first introduced to a Canvas LMS website where sections are divided in pages were concepts are explain and a final exercise. Oh!, and hear this: it's lifetime access. You can access RTO's course material in any moment, and it's updated with new content once in a while. Rasta really impressed me with this way of "teaching" (or you can say self-learn).
+<br /><br />
+It also consists on a VPN access to an active directory environment that consists of ... I think I should not give any spoilers. Jokes aside trust me, you should really check it out. I think even a medium-level red teamer can learn a thing or two from this course.
+<br /><br />
+The material goes from a simple phishing example and exercise to more advanced attacks like Password Cracking and Kerberoasting, to even more detailed and complex topics like Pivoting, AppLocker and AMSI. The two main tools the course focuses on are [Covenant](https://github.com/cobbr/Covenant) and Cobalt Strike. Lessons are made in both C2 frameworks so if you don't have an spared CS license (like me) Covenant is always an option.
+
+### What is your advice?
+
+This is where my experience really shines. If you're going with Covenant as a C2 you should take a little more time in the labs or pre-engage the course to get familiar with Covenant and its bugs. It's an open-source tool after all, so expect some unexpected errors as well as front-end bugs and even not-working built-in taskings (like CreateRemoteService or loading assemblies). Also remember to use [Rasta's fork](https://github.com/ZeroPointSecurity/Covenant) as he may be implementing something of his own for the lab.
+<br /><br />
+There is a slack channel made for technical support and conversation about the assignments you made through the course. People are very active so don't be afraid to ask whenever you have a question, even Rasta configured slackbot to provide aid when a specific word is mention in the channel.
+<br /><br />
+Book an exam as soon as you can. Or at least as soon as you feel comfortable. Everytime I wanted to dive into the exam I had to book into two to three weeks. So try to [check](https://www.zeropointsecurity.co.uk/book-an-exam) every now and then to prepare yourself.
+
+### What about the exam?
+
+The exam is pretty straight forward. I failed it a couple of times because I didn't study the important topics enough, which is most evasion techniques (like CLM, AppLocker, AV-evasion). Aside from that, everything you need to pass the exam is inside Canvas. I had a lot of fun in the exams (even though I failed two times) because it really helps you to put together all the concepts previously learned.
+<br /><br />
+I advice anyone who is red team-beginner (like me) to built an insecure Active Directory environment of their own using (VMs) so practice is always around the corner.
+
+### Any additional tools?
+
+Here I have a list of links that may useful to you in your RTO journey. I will update this list as I remember everyone of those that helped me.
+<br /><br />
+[SprayingToolkit](https://github.com/byt3bl33d3r/SprayingToolkit)
+<br />
+[ruler](https://github.com/sensepost/ruler)
+<br />
+[PhishingTemplates](https://github.com/ZeroPointSecurity/PhishingTemplates)
+<br />
+[AMSI.FAIL](https://amsi.fail/)
+<br />
+[IppSec's AV bypass](https://www.youtube.com/watch?v=9pwMCHlNma4&ab_channel=IppSec)
+
+### TL;DR
+
+I encourage you to take Rasta's RTO, specially if you are just starting in this beautiful journey of red-teaming. It is really worth the price. If you thinks you need to start with something easier, [CRTP](https://www.pentesteracademy.com/activedirectorylab) is a good place to start. And if you're looking for a harder challenge, RastaLabs or any other [prolab](https://www.hackthebox.eu/hacker/pro-labs) from HTB can do the trick.
+<br /><br />
+If you wanna ask me questions or provide any feedback, feel free to contactme via [twitter](https://twitter.com/ferbot19).
+<br /><br />
+Thanks for reading.
