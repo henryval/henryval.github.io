@@ -6,13 +6,13 @@ order: 4
 
 ### whoami
 
-My name is Henry Valencia.
+My name is Henry Valencia. I'm a 27 years old colombian hacker. I love gaming, cooking and philosophy.
 
-I was born in Colombia but consider myself a world citizen (ik very cliché). I have always been a quiet and calm person who focuses on his studies and learning.
-Currently I'm 25 years old and I'm living in Medellín, Colombia; pretty cool city, it is growing a lot in IT related jobs.
+### whereami
+
+Currently I'm living in Amsterdam. I love it here even though it's a bit cold for my taste.
 
 ### whatdoido
 
-Over 4 years in hacking and breaking stuff. Started as a Pentester, learning and growing as a Red Teamer.
-
+Over 6 years on the red side: hacking and breaking stuff. Started as a Pentester, learning and growing as a Red Teamer.
 
