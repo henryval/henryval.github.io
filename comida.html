@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Choice</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #result1, #result2 {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Random Choice</h1>
+    <button onclick="makeRandomChoice('list1')">Choose from small meals</button>
+    <button onclick="makeRandomChoice('list2')">Choose from large meals</button>
+    <p id="result1"></p>
+    <p id="result2"></p>
+
+    <script>
+        function makeRandomChoice(listName) {
+            // Define lists
+            var lists = {
+                list1 : ["Arepa con pollo desmechado", "Tortilla española", "Tacos a la negra", "Hamburguesas", "Schnitzel", "Perritos", "Ceviche de chicharrón", "Cazuela de fríjoles"],
+                list2 : ["Lasaña", "Stoofvlees", "Arroz con pollo", "Pollo a la naranja", "Tacos barbacoa", "Shepherd's pie", "Cannelloni", "Carne oriental con vegetales"]
+            };
+
+            // Get the selected list
+            var selectedList = lists[listName];
+
+            // Generate a random index
+            var randomIndex = Math.floor(Math.random() * selectedList.length);
+
+            // Get the randomly selected choice
+            var randomChoice = selectedList[randomIndex];
+
+            // Display the random choice
+            document.getElementById("result" + listName.charAt(listName.length - 1)).textContent = "Randomly selected choice: " + randomChoice;
+        }
+    </script>
+</body>
+</html>
