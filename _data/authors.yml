@@ -1,0 +1,11 @@
+# -------------------------------------
+# {author_id}:
+#   name: {full name}
+#   twitter: {twitter_of_author}
+#   url: {homepage_of_author}
+# -------------------------------------
+
+ferbot:
+  name: ferbot
+  twitter: ferbot19
+
