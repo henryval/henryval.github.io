@@ -1,7 +1,7 @@
 ---
 title: "Fluffy from HackTheBox"
 author: ferbot
-date: 2025-07-28 22:00:00 +0800
+date: 2025-08-20 22:00:00 +0800
 categories: [htb, windows, fluffy]
 tags: [htb, windows, easy, cve, adcs, esc16, acl]
 description: Assumed breach scenario with realistic abuse leading to ADCS privesc
